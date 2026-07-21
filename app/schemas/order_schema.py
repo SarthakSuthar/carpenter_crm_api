@@ -21,11 +21,20 @@ class OrderLineItemResponse(OrderLineItemBase):
     order_id: UUID
     model_config = ConfigDict(from_attributes=True)
 
+class OrderNoteBase(BaseModel):
+    note: str
+
+class OrderNoteResponse(OrderNoteBase):
+    id: UUID
+    order_id: UUID
+    model_config = ConfigDict(from_attributes=True)
+    
+
 
 class OrderBase(BaseModel):
     customer_name: str
     total_amount: Decimal = Field(..., ge=0)
-    notes: list[str] = []
+    notes: list[OrderNoteResponse] = []
     list_item: list[OrderLineItemCreate]
 
 
@@ -43,4 +52,5 @@ class OrderResponse(OrderBase):
     created_at: datetime
     updated_at: datetime
     line_items: list[OrderLineItemResponse] = []
+    notes: list[OrderNoteResponse] = []
     model_config = ConfigDict(from_attributes=True)

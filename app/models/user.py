@@ -10,8 +10,8 @@ from app.models.order import Order
 class User(Base):
     __tablename__ = "users"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID )
-    google_id: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    hashed_password: Mapped[str] = mapped_column(String(255))
     user_name:Mapped[str] = mapped_column(String(255))
     company_name: Mapped[str | None] = mapped_column(String(255))
     contact_person_name: Mapped[str | None] = mapped_column(String(255))
