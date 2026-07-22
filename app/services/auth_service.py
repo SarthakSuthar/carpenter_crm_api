@@ -61,8 +61,9 @@ async def reset_password(db : AsyncSession, *, email: str, hashed_new_password:s
 
     if (decrypt_password(hashed_new_password) == decrypt_password(old_password)):
          return "New password can not be same as old password."
-        
-    await db.execute(update(User.hashed_password).where(User.email == email))
+
+    user.hashed_password = hashed_new_password
+    # await db.execute(update(User.hashed_password).where(User.email == email).execution_options(synchronize_session="fetch"))
     await db.commit()
     await db.refresh(user)
 

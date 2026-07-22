@@ -26,7 +26,7 @@ class Order(Base):
         onupdate=func.now()
     )
 
-class OrderLineItem:
+class OrderLineItem(Base):
     __tablename__ = "order_line_items"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID )
     order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
@@ -38,10 +38,10 @@ class OrderLineItem:
     order: Mapped["Order"] = relationship(back_populates="line_items")
 
 
-class NotesItem:
+class NotesItem(Base):
     __tablename__ = "notes_items"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID )
     order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
     note: Mapped[str] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    order: Mapped["Order"] = relationship(back_populates="line_items")
+    order: Mapped["Order"] = relationship(back_populates="notes")
