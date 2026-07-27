@@ -17,6 +17,7 @@ class User(Base):
     contact_person_name: Mapped[str | None] = mapped_column(String(255), default=None)
     contact_number: Mapped[str | None] = mapped_column(String(255), default=None)
     address: Mapped[str | None] = mapped_column(String(255), default=None)
+    company_logo: Mapped[str | None] = mapped_column(String(255), default=None)
     orders: Mapped[list["Order"]] = relationship(
         back_populates="user", cascade="all, delete-orphan", lazy="selectin"
     )
