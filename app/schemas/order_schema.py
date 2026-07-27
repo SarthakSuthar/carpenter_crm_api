@@ -5,7 +5,17 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class OrderLineItemBase(BaseModel):
+# MARK: Order Line
+class OrderLineItemCreate(BaseModel):
+    item_name: str
+    order_id: UUID
+    measurement: str
+    quantity: Decimal = Field(..., ge=0)
+    rate: Decimal = Field(..., ge=0)
+
+
+class OrderLineItemUpdate(BaseModel):
+    id: UUID
     order_id: UUID
     item_name: str
     measurement: str
@@ -13,52 +23,59 @@ class OrderLineItemBase(BaseModel):
     rate: Decimal = Field(..., ge=0)
 
 
-class OrderLineItemCreate(OrderLineItemBase):
-    pass
-
-
-class OrderLineItemResponse(OrderLineItemBase):
+class OrderLineItemResponse(BaseModel):
     id: UUID
+    order_id: UUID
+    item_name: str
+    measurement: str
+    quantity: Decimal = Field(..., ge=0)
+    rate: Decimal = Field(..., ge=0)
     model_config = ConfigDict(from_attributes=True)
 
 
-class OrderNoteBase(BaseModel):
+# MARK: Order Note
+
+
+class OrderNoteCreate(BaseModel):
     note: str
+    order_id: UUID
 
 
-class OrderNoteResponse(OrderNoteBase):
+class OrderNoteUpdate(BaseModel):
+    note: str
+    id: UUID
+
+
+class OrderNoteResponse(BaseModel):
     id: UUID
     order_id: UUID
     model_config = ConfigDict(from_attributes=True)
-    
 
-class OrderBase(BaseModel):
+
+# MARK: Order
+class OrderCreate(BaseModel):
     user_id: UUID
     customer_name: str
-    # total_amount: Decimal = Field(..., ge=0)
-    # notes: list[OrderNoteResponse] = []
-    # list_item: list[OrderLineItemCreate]
 
 
-class OrderCreate(OrderBase):
-    # list_item: list[OrderLineItemCreate]
-    order_id: UUID
-
-
-class OrderUpdate(OrderBase):
+class OrderUpdate(BaseModel):
     id: UUID
     user_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    customer_name: str
     line_items: list[OrderLineItemResponse] = []
     notes: list[OrderNoteResponse] = []
+    created_at: datetime
+    updated_at: datetime
 
 
-class OrderResponse(OrderBase):
+class OrderResponse(BaseModel):
     id: UUID
     user_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    customer_name: str
     line_items: list[OrderLineItemResponse] = []
     notes: list[OrderNoteResponse] = []
+    total_amount: Decimal = Field(..., ge=0)
+    created_at: datetime
+    updated_at: datetime
+
     model_config = ConfigDict(from_attributes=True)

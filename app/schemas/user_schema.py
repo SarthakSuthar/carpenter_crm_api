@@ -7,11 +7,15 @@ from uuid import UUID
 class UserCreate(BaseModel):
     user_name: str
     email: EmailStr
-    password: str = Field(..., min_length=6, description="Password must be at least 6 characters long")
+    password: str = Field(
+        ..., min_length=6, description="Password must be at least 6 characters long"
+    )
+
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length= 6)
+    password: str = Field(..., min_length=6)
+
 
 class UserUpdate(BaseModel):
     id: UUID
@@ -20,6 +24,7 @@ class UserUpdate(BaseModel):
     contact_number: str | None = None
     address: str | None = None
     company_logo: str | None = None
+
 
 class UserResponse(BaseModel):
     id: UUID

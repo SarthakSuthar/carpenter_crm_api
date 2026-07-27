@@ -1,6 +1,5 @@
-
 from fastapi import HTTPException, status
-from sqlalchemy import  exists, select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import get_password_hash, verify_password
@@ -8,15 +7,14 @@ from app.models.user import User
 from app.schemas.user_schema import UserCreate, UserResponse, UserUpdate
 
 
-#MARK: Sign Up method
-async def create_user(db: AsyncSession,*, user: UserCreate ) -> UserResponse  : 
+# MARK: Sign Up method
+async def create_user(db: AsyncSession, *, user: UserCreate) -> UserResponse:
     exists_result = await db.execute(select(exists().where(User.email == user.email)))
     if exists_result.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
-    
+
     hashed_password = get_password_hash(user.password)
 
     new_user = User(
@@ -32,13 +30,17 @@ async def create_user(db: AsyncSession,*, user: UserCreate ) -> UserResponse  :
     return UserResponse.model_validate(new_user)
 
 
-#MARK: Sign in method
-async def authenticate_user(db: AsyncSession,*, email: str, password: str) -> UserResponse | None :
+# MARK: Sign in method
+async def authenticate_user(
+    db: AsyncSession, *, email: str, password: str
+) -> UserResponse | None:
 
-    result =  await db.execute(select(User).where(User.email == email ).limit(1))
+    result = await db.execute(select(User).where(User.email == email).limit(1))
     user = result.scalar_one_or_none()
 
-    if user is None or not verify_password(plain_password=password, hashed_password= user.hashed_password):
+    if user is None or not verify_password(
+        plain_password=password, hashed_password=user.hashed_password
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
@@ -47,19 +49,21 @@ async def authenticate_user(db: AsyncSession,*, email: str, password: str) -> Us
     return UserResponse.model_validate(user)
 
 
-#MARK: Reset Password
-async def reset_password(db : AsyncSession, *, email: str, new_password:str) -> str :
+# MARK: Reset Password
+async def reset_password(db: AsyncSession, *, email: str, new_password: str) -> str:
 
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
     if user is None:
-         raise HTTPException(
-               status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Email does not exist",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email does not exist",
+        )
 
-    if verify_password(plain_password= new_password,hashed_password= user.hashed_password):
+    if verify_password(
+        plain_password=new_password, hashed_password=user.hashed_password
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="New password cannot be the same as the old password.",
@@ -71,16 +75,17 @@ async def reset_password(db : AsyncSession, *, email: str, new_password:str) -> 
 
     return "Password updated successfully."
 
-#MARK: Update Profile
-async def update_profile(db : AsyncSession, *, data: UserUpdate) -> UserResponse:
+
+# MARK: Update Profile
+async def update_profile(db: AsyncSession, *, data: UserUpdate) -> UserResponse:
     result = await db.execute(select(User).where(User.id == data.id))
     user = result.scalar_one_or_none()
 
     if user is None:
         raise HTTPException(
-                       status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="User not found",
-                    )
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+        )
 
     user.company_name = data.company_name
     user.contact_number = data.contact_number
