@@ -1,26 +1,23 @@
 from datetime import datetime
 from decimal import Decimal
-
 from uuid import UUID
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
 # MARK: Order Line
 class OrderLineItemCreate(BaseModel):
     item_name: str
-    order_id: UUID
     measurement: str
     quantity: Decimal = Field(..., ge=0)
     rate: Decimal = Field(..., ge=0)
 
 
 class OrderLineItemUpdate(BaseModel):
-    id: UUID
-    order_id: UUID
-    item_name: str
-    measurement: str
-    quantity: Decimal = Field(..., ge=0)
-    rate: Decimal = Field(..., ge=0)
+    item_name: str | None = None
+    measurement: str | None = None
+    quantity: Decimal | None = Field(default=None, ge=0)
+    rate: Decimal | None = Field(default=None, ge=0)
 
 
 class OrderLineItemResponse(BaseModel):
@@ -28,27 +25,26 @@ class OrderLineItemResponse(BaseModel):
     order_id: UUID
     item_name: str
     measurement: str
-    quantity: Decimal = Field(..., ge=0)
-    rate: Decimal = Field(..., ge=0)
+    quantity: Decimal
+    rate: Decimal
+
     model_config = ConfigDict(from_attributes=True)
 
 
 # MARK: Order Note
-
-
 class OrderNoteCreate(BaseModel):
     note: str
-    order_id: UUID
 
 
 class OrderNoteUpdate(BaseModel):
     note: str
-    id: UUID
 
 
 class OrderNoteResponse(BaseModel):
     id: UUID
     order_id: UUID
+    note: str
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -59,13 +55,7 @@ class OrderCreate(BaseModel):
 
 
 class OrderUpdate(BaseModel):
-    id: UUID
-    user_id: UUID
-    customer_name: str
-    line_items: list[OrderLineItemResponse] = []
-    notes: list[OrderNoteResponse] = []
-    created_at: datetime
-    updated_at: datetime
+    customer_name: str | None = None
 
 
 class OrderResponse(BaseModel):
@@ -74,7 +64,7 @@ class OrderResponse(BaseModel):
     customer_name: str
     line_items: list[OrderLineItemResponse] = []
     notes: list[OrderNoteResponse] = []
-    total_amount: Decimal = Field(..., ge=0)
+    total_amount: Decimal
     created_at: datetime
     updated_at: datetime
 

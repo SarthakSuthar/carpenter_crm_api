@@ -1,10 +1,11 @@
-from app.models.base import Base
 import uuid
 from datetime import datetime
-from sqlalchemy import String, DateTime
-from sqlalchemy.sql import func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from sqlalchemy import DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
+from app.models.base import Base
 from app.models.order import Order
 
 

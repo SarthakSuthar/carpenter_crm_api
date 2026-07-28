@@ -1,29 +1,37 @@
+import uuid
 from datetime import datetime
 from decimal import Decimal
-import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
-from app.models.user import User
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 
 class Order(Base):
     __tablename__ = "orders"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID)
-    user: Mapped["User"] = relationship(back_populates="orders")
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     customer_name: Mapped[str] = mapped_column(String(255))
-    total_amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0.00)
-    notes: Mapped[list["NotesItem"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
+    total_amount: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2), default=Decimal("0.00")
+    )
+
+    user: Mapped["User"] = relationship(back_populates="orders", lazy="selectin")
+    notes: Mapped[list["OrderLineNotes"]] = relationship(
+        back_populates="order", cascade="all, delete-orphan", lazy="selectin"
     )
     line_items: Mapped[list["OrderLineItem"]] = relationship(
-        back_populates="order", cascade="all, delete-orphan"
+        back_populates="order", cascade="all, delete-orphan", lazy="selectin"
     )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
@@ -34,7 +42,8 @@ class Order(Base):
 
 class OrderLineItem(Base):
     __tablename__ = "order_line_items"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     order_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"), index=True
     )
@@ -45,14 +54,14 @@ class OrderLineItem(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    order: Mapped["Order"] = relationship(
-        back_populates="line_items", cascade="all, delete-orphan", lazy="selectin"
-    )
+
+    order: Mapped["Order"] = relationship(back_populates="line_items", lazy="selectin")
 
 
-class NotesItem(Base):
-    __tablename__ = "notes_items"
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.UUID)
+class OrderLineNotes(Base):
+    __tablename__ = "order_line_notes"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     order_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("orders.id", ondelete="CASCADE"), index=True
     )
@@ -60,6 +69,5 @@ class NotesItem(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    order: Mapped["Order"] = relationship(
-        back_populates="notes", cascade="all, delete-orphan", lazy="selectin"
-    )
+
+    order: Mapped["Order"] = relationship(back_populates="notes", lazy="selectin")
