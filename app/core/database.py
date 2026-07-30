@@ -1,21 +1,19 @@
-import urllib.parse
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from pydantic_core import Url
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-import urllib
+from app.core.config import get_settings
 
-from app.main import DATABASE_URL
+settings = get_settings()
 
+DATABASE_URL = settings.database_url
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
-    future=True,  # Use future=True for SQLAlchemy 2.0 style
+    echo=False,
+    pool_size=5,
+    max_overflow=10,
 )
-AsyncSessionLocal = sessionmaker(
+
+async_session_maker = async_sessionmaker(
     bind=engine,
-    class_=AsyncSession,
     expire_on_commit=False,
 )
-Base = declarative_base()
