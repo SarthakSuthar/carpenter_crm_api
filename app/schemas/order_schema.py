@@ -55,6 +55,7 @@ class OrderCreate(BaseModel):
 
 
 class OrderUpdate(BaseModel):
+    id: UUID
     customer_name: str | None = None
 
 

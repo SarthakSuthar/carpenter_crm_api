@@ -1,10 +1,11 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.order import Order, OrderLineItem, OrderLineNotes
+from app.models.user import User
 from app.schemas.order_schema import (
     OrderCreate,
     OrderLineItemCreate,
@@ -14,6 +15,7 @@ from app.schemas.order_schema import (
     OrderNoteResponse,
     OrderNoteUpdate,
     OrderResponse,
+    OrderUpdate,
 )
 
 
@@ -30,6 +32,28 @@ async def get_order(db: AsyncSession, *, order_id: UUID) -> Order:
     return order
 
 
+async def get_order_list_by_user_id(
+    db: AsyncSession, *, user_id: UUID, limit: int = 20, offset: int = 0
+) -> list[OrderResponse]:
+    user_exists = await db.execute(select(exists().where(User.id == user_id)))
+    if not user_exists.scalar():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    result = await db.execute(
+        select(Order)
+        .where(Order.user_id == user_id)
+        .order_by(Order.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    orders = result.scalars().all()
+
+    return [OrderResponse.model_validate(order) for order in orders]
+
+
 async def create_order(db: AsyncSession, *, order: OrderCreate) -> OrderResponse:
 
     new_order = Order(user_id=order.user_id, customer_name=order.customer_name)
@@ -39,6 +63,30 @@ async def create_order(db: AsyncSession, *, order: OrderCreate) -> OrderResponse
     await db.refresh(new_order)
 
     return OrderResponse.model_validate(new_order)
+
+
+async def update_order(
+    db: AsyncSession,
+    *,
+    order_id: UUID,
+    order: OrderUpdate,
+) -> OrderResponse:
+    result = await db.execute(select(Order).where(Order.id == order_id))
+    order_data = result.scalar_one_or_none()
+
+    if order_data is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Order not found",
+        )
+
+    if order.customer_name is not None:
+        order_data.customer_name = order.customer_name
+
+    await db.commit()
+    await db.refresh(order_data)
+
+    return OrderResponse.model_validate(order_data)
 
 
 async def delete_order(db: AsyncSession, *, order_id: UUID) -> None:
@@ -77,7 +125,7 @@ async def add_item_to_order(
     return OrderLineItemResponse.model_validate(new_item)
 
 
-async def update_item(
+async def update_item_to_order(
     db: AsyncSession, *, order_id: UUID, item_id: UUID, item: OrderLineItemUpdate
 ) -> OrderLineItemResponse:
     order = await get_order(db=db, order_id=order_id)
@@ -149,7 +197,7 @@ async def add_note_to_order(
     return OrderNoteResponse.model_validate(new_note)
 
 
-async def update_note(
+async def update_note_to_order(
     db: AsyncSession, *, order_id: UUID, note_id: UUID, note: OrderNoteUpdate
 ) -> OrderNoteResponse:
 
@@ -175,7 +223,9 @@ async def update_note(
     return OrderNoteResponse.model_validate(note_result)
 
 
-async def delete_note(db: AsyncSession, *, order_id: UUID, note_id: UUID) -> None:
+async def delete_note_to_order(
+    db: AsyncSession, *, order_id: UUID, note_id: UUID
+) -> None:
     order = await get_order(db=db, order_id=order_id)
 
     result = await db.execute(
