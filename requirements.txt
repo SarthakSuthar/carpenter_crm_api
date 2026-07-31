@@ -3,3 +3,4 @@ SQLAlchemy==2.0.51
 passlib[bcrypt]==1.7.4
 supabase
 psycopg2-binary
+asyncpg

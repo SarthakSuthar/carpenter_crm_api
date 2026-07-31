@@ -1,13 +1,12 @@
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_db
-from app.api.v1.api_router import auth_router
 from app.schemas.user_schema import UserCreate, UserLogin, UserResponse
 from app.services.auth_service import authenticate_user, create_user, reset_password
 
-router = auth_router
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/login", response_model=UserResponse)

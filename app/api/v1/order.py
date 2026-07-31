@@ -1,10 +1,9 @@
 from uuid import UUID
 
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_db
-from app.api.v1.api_router import order_router as router
 from app.schemas.order_schema import (
     OrderCreate,
     OrderLineItemCreate,
@@ -29,6 +28,8 @@ from app.services.order_service import (
     update_note_to_order,
     update_order,
 )
+
+router = APIRouter(prefix="/orders", tags=["order"])
 
 
 # MARK: Orders

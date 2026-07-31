@@ -4,7 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     app_name: str = "Carpenter CRM Backend"
     database_url: str
@@ -13,3 +15,30 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()  # type: ignore
+
+
+# from functools import lru_cache
+
+# from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# class Settings(BaseSettings):
+#     app_name: str = "Carpenter CRM API"
+#     host: str
+#     port: int
+#     database: str
+#     user: str
+#     password: str
+
+#     model_config = SettingsConfigDict(
+#         env_file=".env", case_sensitive=False, extra="ignore"
+#     )
+
+#     @property
+#     def database_url(self) -> str:
+#         return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
+
+
+# @lru_cache
+# def get_settings() -> Settings:
+#     return Settings()  # type: ignore
