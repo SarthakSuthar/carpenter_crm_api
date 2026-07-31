@@ -1,9 +1,13 @@
 from fastapi import APIRouter, Depends
-from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_db
-from app.schemas.user_schema import UserCreate, UserLogin, UserResponse
+from app.schemas.user_schema import (
+    UserCreate,
+    UserForgotPassword,
+    UserLogin,
+    UserResponse,
+)
 from app.services.auth_service import authenticate_user, create_user, reset_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -27,6 +31,6 @@ async def sign_up(
 
 @router.post("/forgot-password", status_code=200)
 async def forgot_password(
-    db: AsyncSession = Depends(get_db), *, email: EmailStr, password: str
+    db: AsyncSession = Depends(get_db), *, body: UserForgotPassword
 ) -> str:
-    return await reset_password(db=db, email=email, new_password=password)
+    return await reset_password(db=db, email=body.email, new_password=body.password)

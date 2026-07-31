@@ -17,6 +17,10 @@ class UserLogin(BaseModel):
     password: str = Field(..., min_length=6)
 
 
+class UserForgotPassword(UserLogin):
+    pass
+
+
 class UserUpdate(BaseModel):
     id: UUID
     company_name: str | None = None
