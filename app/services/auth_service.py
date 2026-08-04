@@ -91,7 +91,7 @@ async def update_profile(db: AsyncSession, *, data: UserUpdate) -> UserResponse:
     user.contact_number = data.contact_number
     user.contact_person_name = data.contact_person_name
     user.address = data.address
-    user.company_logo = data.company_name
+    user.company_logo = data.company_logo
 
     await db.commit()
     await db.refresh(user)
