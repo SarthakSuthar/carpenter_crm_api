@@ -1,12 +1,11 @@
 import uuid
 from datetime import datetime
 
+from models.base import Base
+from models.order import Order
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-
-from app.models.base import Base
-from app.models.order import Order
 
 
 class User(Base):

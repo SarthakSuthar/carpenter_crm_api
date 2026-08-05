@@ -1,9 +1,8 @@
+from api.dependencies import get_db
 from fastapi import APIRouter, Depends
+from schemas.user_schema import UserResponse, UserUpdate
+from services.auth_service import update_profile
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.dependencies import get_db
-from app.schemas.user_schema import UserResponse, UserUpdate
-from app.services.auth_service import update_profile
 
 router = APIRouter(prefix="/user", tags=["user"])
 

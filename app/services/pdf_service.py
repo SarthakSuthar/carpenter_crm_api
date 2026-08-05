@@ -6,6 +6,8 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
+from models.order import Order
+from models.user import User
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -22,9 +24,6 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.order import Order
-from app.models.user import User
 
 PAGE_W, PAGE_H = A4
 MARGIN = 15 * mm

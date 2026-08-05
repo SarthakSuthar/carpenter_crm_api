@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
 
+from api.v1.api_router import auth_router, order_router, user_router
+from core.config import get_settings
+from core.database import engine
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.api.v1.api_router import auth_router, order_router, user_router
-from app.core.config import get_settings
-from app.core.database import engine
 
 settings = get_settings()
 

@@ -1,12 +1,9 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import exists, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.models.order import Order, OrderLineItem, OrderLineNotes
-from app.models.user import User
-from app.schemas.order_schema import (
+from models.order import Order, OrderLineItem, OrderLineNotes
+from models.user import User
+from schemas.order_schema import (
     OrderCreate,
     OrderLineItemCreate,
     OrderLineItemResponse,
@@ -17,6 +14,8 @@ from app.schemas.order_schema import (
     OrderResponse,
     OrderUpdate,
 )
+from sqlalchemy import exists, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 # MARK: Order

@@ -3,13 +3,12 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
+from models.base import Base
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.models.base import Base
-
 if TYPE_CHECKING:
-    from app.models.user import User
+    from models.user import User
 
 
 class Order(Base):

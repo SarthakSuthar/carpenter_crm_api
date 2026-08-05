@@ -1,10 +1,8 @@
 from uuid import UUID
 
+from api.dependencies import get_db
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.api.dependencies import get_db
-from app.schemas.order_schema import (
+from schemas.order_schema import (
     OrderCreate,
     OrderLineItemCreate,
     OrderLineItemResponse,
@@ -15,7 +13,7 @@ from app.schemas.order_schema import (
     OrderResponse,
     OrderUpdate,
 )
-from app.services.order_service import (
+from services.order_service import (
     add_item_to_order,
     add_note_to_order,
     create_order,
@@ -28,7 +26,8 @@ from app.services.order_service import (
     update_note_to_order,
     update_order,
 )
-from app.services.pdf_service import create_pdf
+from services.pdf_service import create_pdf
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/orders", tags=["order"])
 
