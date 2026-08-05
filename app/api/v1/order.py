@@ -28,6 +28,7 @@ from app.services.order_service import (
     update_note_to_order,
     update_order,
 )
+from app.services.pdf_service import create_pdf
 
 router = APIRouter(prefix="/orders", tags=["order"])
 
@@ -134,3 +135,12 @@ async def delete_note(
     db: AsyncSession = Depends(get_db),
 ):
     return await delete_note_to_order(db=db, order_id=order_id, note_id=note_id)
+
+
+# MARK: pdf
+@router.get("/pdf/{order_id}")
+async def get_pdf(
+    order_id: UUID,
+    db: AsyncSession = Depends(get_db),
+):
+    return await create_pdf(order_id=order_id, db=db)

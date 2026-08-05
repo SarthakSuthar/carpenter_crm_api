@@ -7,3 +7,4 @@ psycopg2-binary
 asyncpg
 alembic
 types-passlib
+reportlab
