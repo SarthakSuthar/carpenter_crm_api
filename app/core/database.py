@@ -1,15 +1,16 @@
 from core.config import get_settings
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 
 settings = get_settings()
 
 DATABASE_URL = settings.database_url
 
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_size=5,
-    max_overflow=10,
+    poolclass=NullPool,
     connect_args={"statement_cache_size": 0},
 )
 
