@@ -13,6 +13,7 @@ from reportlab.lib.enums import TA_RIGHT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.pdfgen.canvas import Canvas
 from reportlab.platypus import (
     Flowable,
     Image,
@@ -24,6 +25,7 @@ from reportlab.platypus import (
 )
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.concurrency import run_in_threadpool
 
 PAGE_W, PAGE_H = A4
 MARGIN = 15 * mm
@@ -33,6 +35,25 @@ normal = styles["Normal"]
 right_style = ParagraphStyle("right", parent=normal, alignment=TA_RIGHT)
 bold = ParagraphStyle("bold", parent=normal, fontName="Helvetica-Bold")
 bold_right = ParagraphStyle("bold_right", parent=right_style, fontName="Helvetica-Bold")
+
+
+def _draw_page_frame(canvas: Canvas, doc: SimpleDocTemplate) -> None:
+    canvas.saveState()
+    canvas.setFillColor(colors.white)
+    canvas.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
+
+    border_margin = 8 * mm
+    canvas.setStrokeColor(colors.black)
+    canvas.setLineWidth(1)
+    canvas.rect(
+        border_margin,
+        border_margin,
+        PAGE_W - 2 * border_margin,
+        PAGE_H - 2 * border_margin,
+        fill=0,
+        stroke=1,
+    )
+    canvas.restoreState()
 
 
 def _build_pdf(order: Order, user: User, logo_image: Image | None) -> BytesIO:
@@ -56,25 +77,35 @@ def _build_pdf(order: Order, user: User, logo_image: Image | None) -> BytesIO:
 
     right_col: list[Flowable] = []
     if logo_image:
+        logo_image.hAlign = "RIGHT"
         right_col.append(logo_image)
-    right_col += [
-        Paragraph(user.contact_person_name or "", right_style),
-        Paragraph(user.contact_number or "", right_style),
-        Paragraph(user.address or "", right_style),
-    ]
+    if user.contact_person_name:
+        right_col.append(Paragraph(user.contact_person_name, right_style))
+    if user.contact_number:
+        right_col.append(Paragraph(user.contact_number, right_style))
+    if user.address:
+        right_col.append(Paragraph(user.address, right_style))
 
     left_table = Table([[p] for p in left_col])
-    right_table = Table([[p] for p in right_col])
 
-    header_table = Table(
-        [[left_table, right_table]],
-        colWidths=[(PAGE_W - 2 * MARGIN) * 0.55, (PAGE_W - 2 * MARGIN) * 0.45],
-    )
+    content_width = PAGE_W - 2 * MARGIN
+    header_row = [left_table]
+    col_widths = [content_width * 0.55, content_width * 0.45]
+    if right_col:
+        right_table = Table([[p] for p in right_col])
+        right_table.setStyle(
+            TableStyle([("ALIGN", (0, 0), (-1, -1), "RIGHT")])
+        )
+        header_row.append(right_table)
+    else:
+        col_widths = [content_width]
+
+    header_table = Table([header_row], colWidths=col_widths)
     header_table.setStyle(
         TableStyle(
             [
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                ("ALIGN", (-1, 0), (-1, 0), "RIGHT"),
             ]
         )
     )
@@ -111,19 +142,27 @@ def _build_pdf(order: Order, user: User, logo_image: Image | None) -> BytesIO:
                 ("FONTNAME", (2, -1), (-1, -1), "Helvetica-Bold"),
                 ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
                 ("ALIGN", (0, 0), (0, -1), "LEFT"),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
             ]
         )
     )
     elements.append(items_table)
-    elements.append(Spacer(1, 10 * mm))
 
-    elements.append(Paragraph("<b>Notes</b>", normal))
-    for note in order.notes or []:
-        elements.append(Paragraph(f"- {note}", normal))
+    notes = [
+        line.note.strip()
+        for line in (order.notes or [])
+        if line.note and line.note.strip()
+    ]
+    if notes:
+        elements.append(Spacer(1, 10 * mm))
+        elements.append(Paragraph("<b>Notes</b>", normal))
+        for note in notes:
+            elements.append(Paragraph(f"- {note}", normal))
 
-    doc.build(elements)
+    doc.build(elements, onFirstPage=_draw_page_frame, onLaterPages=_draw_page_frame)
     buffer.seek(0)
     return buffer
 
@@ -135,8 +174,13 @@ def convert_pdf_to_base64(buffer: BytesIO) -> str:
 
 
 def convert_base64_to_image(image: str, width: float, height: float) -> Image:
+    image = image.strip()
     if "," in image:
         image = image.split(",", 1)[1]
+
+    missing_padding = len(image) % 4
+    if missing_padding:
+        image += "=" * (4 - missing_padding)
 
     image_bytes = base64.b64decode(image)
     return Image(BytesIO(image_bytes), width=width, height=height)
@@ -174,14 +218,12 @@ async def create_pdf(db: AsyncSession, order_id: UUID) -> JSONResponse:
             height=15 * mm,
         )
 
-    from starlette.concurrency import run_in_threadpool
-
     buffer = await run_in_threadpool(_build_pdf, order, user, logo_image)
     base64_pdf = convert_pdf_to_base64(buffer)
 
     return JSONResponse(
         {
-            "order_id": order.id,
+            "order_id": str(order.id),
             "filename": f"invoice_{order.id}.pdf",
             "base64": base64_pdf,
         }
